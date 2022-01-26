@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace InterviewTask.Authentication
 {
-    public class AppUser : IdentityUser
+    public class ApplicationUser : IdentityUser
     {
         
     }

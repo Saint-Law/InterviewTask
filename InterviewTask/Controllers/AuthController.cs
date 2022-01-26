@@ -1,5 +1,6 @@
 ﻿using InterviewTask.Authentication;
 using InterviewTask.Model;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -18,14 +19,41 @@ namespace InterviewTask.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<AppUser> userManager;
+        private readonly UserManager<ApplicationUser> userManager;
         private readonly IConfiguration _configuration;
 
-        public AuthController(UserManager<AppUser> userManager, IConfiguration configuration)
+        public AuthController(UserManager<ApplicationUser> userManager, IConfiguration configuration, RoleManager<IdentityRole> roleManager)
         {
             this.userManager = userManager;
             _configuration = configuration;
         }
+
+        [HttpPost]
+        [Route("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            var userExist = await userManager.FindByNameAsync(model.UserName);
+            if (userExist != null)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "user already exist" });
+
+            }
+            ApplicationUser user = new ApplicationUser()
+            {
+                Email = model.Email,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                UserName = model.UserName,
+            };
+
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "user creation fail" });
+
+            }
+            return Ok(new Response { Status = "Success", Message = "user created successfully" });
+        }
+
 
         [HttpPost]
         [Route("Login")]
@@ -68,6 +96,7 @@ namespace InterviewTask.Controllers
 
             return Unauthorized();
         }
+
     }
 }
  
